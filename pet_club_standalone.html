@@ -1,0 +1,2113 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PET CLUB - Agendamentos e Pets</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & Babel Standalone CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Configure Tailwind with Custom Fonts & Extended Styles -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              display: ['Outfit', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Native CSS Animations for high fluid visual feel -->
+    <style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes slideUp {
+        from { transform: translateY(12px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes scaleUp {
+        from { transform: scale(0.96); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.25s ease-out forwards;
+      }
+      .animate-slide-up {
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      .animate-scale-up {
+        animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased font-sans">
+    
+    <!-- Root Mounting Element -->
+    <div id="root"></div>
+
+    <!-- Application Script written in JSX (Transpiled in-browser by Babel) -->
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // ==========================================
+      // CONSTANTS & INITIAL DATA MOCKS
+      // ==========================================
+      const initialUserProfile = {
+        name: "Mariana Silva",
+        email: "mariana.silva@email.com",
+        phone: "(11) 98765-4321",
+        address: "Av. Paulista, 1200 - São Paulo, SP",
+        points: 120,
+        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200"
+      };
+
+      const initialPets = [
+        {
+          id: "pet-1",
+          name: "Max",
+          type: "dog",
+          breed: "Golden Retriever",
+          age: "2 anos e 3 meses",
+          gender: "Macho",
+          photo: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400",
+          weightHistory: [
+            { date: "Jan 2026", value: 28.5 },
+            { date: "Mar 2026", value: 30.2 },
+            { date: "Abr 2026", value: 31.0 },
+            { date: "Mai 2026", value: 31.8 }
+          ],
+          vaccinations: [
+            { id: "vac-1", name: "Vacina Antirrábica", date: "2026-03-10", status: "completed", nextDueDate: "2027-03-10" },
+            { id: "vac-2", name: "Múltipla V10", date: "2026-04-15", status: "completed", nextDueDate: "2027-04-15" },
+            { id: "vac-3", name: "Vacina de Gripe H1N1 Pet", date: "2026-05-20", status: "pending", nextDueDate: "2026-06-15" }
+          ],
+          healthHistory: [
+            { id: "health-1", date: "2026-04-15", title: "Check-up Anual", description: "Max foi considerado em excelente estado físico. Peso ideal e ótima pelagem.", doctor: "Dr. Roberto Neves" },
+            { id: "health-2", date: "2026-05-10", title: "Limpeza Dentária", description: "Procedimento preventivo realizado para remoção suave de tártaro inicial.", doctor: "Dra. Elza Mendes" }
+          ]
+        },
+        {
+          id: "pet-2",
+          name: "Luna",
+          type: "cat",
+          breed: "Siamês",
+          age: "1 ano",
+          gender: "Fêmea",
+          photo: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=400",
+          weightHistory: [
+            { date: "Fev 2026", value: 3.8 },
+            { date: "Abr 2026", value: 4.0 },
+            { date: "Mai 2026", value: 4.2 }
+          ],
+          vaccinations: [
+            { id: "vac-4", name: "Tríplice Felina F3", date: "2026-02-18", status: "completed", nextDueDate: "2027-02-18" },
+            { id: "vac-5", name: "Vacina Quádrupla Felina", date: "2026-05-01", status: "completed", nextDueDate: "2027-05-01" }
+          ],
+          healthHistory: [
+            { id: "health-3", date: "2026-05-01", title: "Avaliação Nutricional", description: "Ajuste na quantidade diária de ração para manter o peso estável na fase adulta.", doctor: "Dra. Elza Mendes" }
+          ]
+        }
+      ];
+
+      const initialBadges = [
+        {
+          id: "badge-1",
+          title: "Membro da Guilda",
+          description: "Criou o primeiro perfil de pet no aplicativo",
+          iconName: "heart",
+          points: 50,
+          unlocked: true,
+          unlockedAt: "28/05/2026",
+          category: "social"
+        },
+        {
+          id: "badge-2",
+          title: "Super Protetor",
+          description: "Completou uma vacinação programada e registrada",
+          iconName: "shield",
+          points: 100,
+          unlocked: true,
+          unlockedAt: "28/05/2026",
+          category: "health"
+        },
+        {
+          id: "badge-3",
+          title: "Investidor de Carinho",
+          description: "Realizou sua primeira compra de ração gourmet premium",
+          iconName: "shoppingbag",
+          points: 80,
+          unlocked: false,
+          category: "shopping"
+        },
+        {
+          id: "badge-4",
+          title: "Doador de Mimos",
+          description: "Iniciou um agendamento de Banho e Tosa",
+          iconName: "sparkles",
+          points: 60,
+          unlocked: false,
+          category: "booking"
+        },
+        {
+          id: "badge-5",
+          title: "Mestre da Saúde",
+          description: "Completou o histórico de peso de 3 meses para qualquer pet",
+          iconName: "award",
+          points: 150,
+          unlocked: false,
+          category: "health"
+        }
+      ];
+
+      const SERVICE_TYPES = [
+        {
+          type: 'banho_tosa',
+          name: 'Banho & Tosa Estética Premium',
+          price: 85.00,
+          duration: '1h 30m',
+          icon: 'scissors',
+          color: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:border-emerald-400',
+          iconColor: 'bg-emerald-100 text-emerald-700',
+          description: 'Higienização profunda com sabão vegano hipoalergênico, corte de unhas, limpeza auricular e secagem morna escovada tranquila.',
+          providers: ['Thiago Lima (Esteticista Sênior)', 'Regina Castro (Especialista em Spitz e Poodles)']
+        },
+        {
+          type: 'consulta_online',
+          name: 'Telemedicina Veterinária Prime',
+          price: 110.00,
+          duration: '35m',
+          icon: 'stethoscope',
+          color: 'bg-sky-50 text-sky-800 border-sky-200 hover:border-sky-400',
+          iconColor: 'bg-sky-100 text-sky-700',
+          description: 'Videoconsulta instantânea para orientações de comportamento, pele, triagem de sintomas de emergência e prescrições médicas digitais.',
+          providers: ['Dra. Elza Mendes (Clínica Médica e Felinos)', 'Dr. Alan Torres (Nutricionista Canino)']
+        },
+        {
+          type: 'consulta_presencial',
+          name: 'Consulta Geral Presencial VIP',
+          price: 150.00,
+          duration: '50m',
+          icon: 'heart',
+          color: 'bg-amber-50 text-amber-805 border-amber-200 hover:border-amber-400',
+          iconColor: 'bg-amber-100 text-amber-700',
+          description: 'Diagnóstico físico minucioso em clínica parceira equipada com ultrassom, aferição de pressão sanguínea, batimentos cardíacos e orientações.',
+          providers: ['Dr. Roberto Neves (Hospital 24h)', 'Dra. Elza Mendes (Unidade Ibirapuera)']
+        },
+        {
+          type: 'vacina',
+          name: 'Imunização & Vacina Express',
+          price: 65.00,
+          duration: '15m',
+          icon: 'syringe',
+          color: 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200 hover:border-fuchsia-400',
+          iconColor: 'bg-fuchsia-100 text-fuchsia-700',
+          description: 'Administração sem estresse de imunizantes essenciais (V10, Antirrábica, Tríplice felina) com atestado vacinal digital assinado e brinde pet.',
+          providers: ['Enfermeira Júlia Reis', 'Dr. Roberto Neves']
+        }
+      ];
+
+      const TIME_SLOTS = ["09:00", "10:30", "12:00", "14:00", "15:30", "17:00"];
+
+      const PRESET_PHOTOS = [
+        "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=200", // Dog 1
+        "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=200", // Cat 1
+        "https://images.unsplash.com/photo-1581888227599-779811939961?auto=format&fit=crop&q=80&w=200", // Dog 2
+        "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&q=80&w=200", // Cat 2
+        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=200", // Rabbit
+        "https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&q=80&w=200"  // Bird
+      ];
+
+      // ==========================================
+      // ICON COMPONENT (Clean, Offline-Friendly)
+      // ==========================================
+      const SVG_PATHS = {
+        heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>,
+        calendar: <g><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></g>,
+        clock: <g><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></g>,
+        smile: <g><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></g>,
+        stethoscope: <g><path d="M11 2a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 0-2-2"/><path d="M2 17a5 5 0 0 0 10 0v-4"/><path d="M12 4h4v6a4 4 0 0 0 8 0V4h-4"/></g>,
+        scissors: <g><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9.8" x2="20" y1="8.2" y2="18.5"/><line x1="9.8" x2="20" y1="15.8" y2="5.5"/></g>,
+        syringe: <g><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 0 1 0-1.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/><path d="m14 4 6 6"/></g>,
+        sparkles: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>,
+        checkcircle: <g><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></g>,
+        shieldcheck: <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 11 13 15 9"/></g>,
+        user: <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
+        trash: <g><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></g>,
+        menu: <g><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></g>,
+        x: <g><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></g>,
+        logout: <g><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></g>,
+        trophy: <g><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a6 6 0 0 1 6 6v4a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z"/></g>,
+        shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+        award: <g><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></g>,
+        mail: <g><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></g>,
+        lock: <g><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>,
+        eye: <g><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></g>,
+        eyeoff: <g><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></g>,
+        alertcircle: <g><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g>,
+        filetext: <g><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></g>,
+        activity: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>,
+        plus: <g><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></g>,
+        bell: <g><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></g>,
+        chevronright: <polyline points="9 18 15 12 9 6"/>,
+        navigation: <polygon points="3 11 22 2 13 21 11 13 3 11"/>,
+        bookopen: <g><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></g>,
+        shieldalert: <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g>,
+        target: <g><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></g>,
+        shoppingbag: <g><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></g>
+      };
+
+      function Icon({ name, className = "w-5 h-5", ...props }) {
+        const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        let key = norm;
+        if (key === 'checkcircle2') key = 'checkcircle';
+        if (key === 'trash2') key = 'trash';
+        const pathData = SVG_PATHS[key];
+        if (!pathData) return null;
+
+        return (
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            className={className}
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            {...props}
+          >
+            {pathData}
+          </svg>
+        );
+      }
+
+      // ==========================================
+      // VIEW: LOGIN SCREEN
+      // ==========================================
+      function Login({ onLoginSuccess }) {
+        const [isRegistering, setIsRegistering] = useState(false);
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
+        const [name, setName] = useState('');
+        const [showPassword, setShowPassword] = useState(false);
+        const [error, setError] = useState('');
+        const [isLoading, setIsLoading] = useState(false);
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          setError('');
+
+          if (!email || !password) {
+            setError('Por favor, preencha todos os campos.');
+            return;
+          }
+
+          if (isRegistering && !name) {
+            setError('Por favor, informe o seu nome para cadastro.');
+            return;
+          }
+
+          if (password.length < 6) {
+            setError('A senha deve conter no mínimo 6 caracteres.');
+            return;
+          }
+
+          setIsLoading(true);
+          
+          setTimeout(() => {
+            setIsLoading(false);
+            onLoginSuccess({
+              name: isRegistering ? name : email.split('@')[0],
+              email: email,
+              phone: "(11) 99999-8888",
+              address: "Endereço cadastrado - São Paulo, SP",
+              points: isRegistering ? 50 : 120,
+              avatar: isRegistering 
+                ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200"
+                : "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200"
+            });
+          }, 1200);
+        };
+
+        return (
+          <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in" id="login-container-page">
+            <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden z-10 animate-scale-up">
+              
+              {/* Upper area */}
+              <div className="bg-emerald-600 p-8 text-white relative overflow-hidden">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="bg-white/15 h-9 w-9 rounded-xl flex items-center justify-center text-white font-extrabold">
+                    <span className="font-display text-xs tracking-tighter">PET</span>
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-emerald-100">Agendamentos</span>
+                </div>
+                <h2 className="text-2xl font-extrabold tracking-tight font-display">
+                  {isRegistering ? 'Criar conta' : 'Acessar o app'}
+                </h2>
+                <p className="text-xs text-emerald-100 mt-1 leading-relaxed">
+                  {isRegistering 
+                    ? 'Cadastre-se para gerenciar seus pets e agendar os atendimentos.' 
+                    : 'Entre com seu e-mail e senha para acessar seus agendamentos.'
+                  }
+                </p>
+              </div>
+
+              {/* Content area */}
+              <div className="p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2 text-xs text-red-600 font-medium">
+                      <Icon name="alertcircle" className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  {isRegistering && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 block">Seu Nome</label>
+                      <div className="relative">
+                        <Icon name="user" className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Seu nome completo"
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 transition font-medium"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-600 block">E-mail</label>
+                    <div className="relative">
+                      <Icon name="mail" className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="exemplo@email.com"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 transition font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-bold text-slate-600 block">Senha</label>
+                      {!isRegistering && (
+                        <button type="button" className="text-[10px] font-bold text-emerald-600 hover:underline">
+                          Esqueceu a senha?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Icon name="lock" className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 transition font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <Icon name="eyeoff" className="w-4 h-4" /> : <Icon name="eye" className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Carregando...
+                      </span>
+                    ) : (
+                      <>
+                        <Icon name="logout" className="w-4 h-4 rotate-180" />
+                        {isRegistering ? 'Cadastrar e Entrar' : 'Entrar'}
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Register switch */}
+                <div className="text-center text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRegistering(!isRegistering);
+                      setError('');
+                    }}
+                    className="text-slate-500 hover:text-emerald-600 transition font-medium font-bold"
+                  >
+                    {isRegistering 
+                      ? 'Já tem uma conta? Entre aqui' 
+                      : 'Criar uma nova conta'
+                    }
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // ==========================================
+      // VIEW: PET PROFILES SCREEN
+      // ==========================================
+      function PetProfiles({
+        pets,
+        selectedPetId,
+        onSelectPet,
+        onAddPet,
+        onDeletePet,
+        onAddWeight,
+        onAddVaccine,
+        onAddHealthRecord,
+        onUnlockBadge
+      }) {
+        const [activeTab, setActiveTab] = useState('info');
+        const [showAddForm, setShowAddForm] = useState(false);
+        const [newPetName, setNewPetName] = useState('');
+        const [newPetType, setNewPetType] = useState('dog');
+        const [newPetBreed, setNewPetBreed] = useState('');
+        const [newPetAge, setNewPetAge] = useState('');
+        const [newPetGender, setNewPetGender] = useState('Macho');
+        const [selectedPhotoIdx, setSelectedPhotoIdx] = useState(0);
+
+        const [newWeight, setNewWeight] = useState('');
+        const [newWeightDate, setNewWeightDate] = useState('');
+
+        const [newVacName, setNewVacName] = useState('');
+        const [newVacDate, setNewVacDate] = useState('');
+        const [newVacNext, setNewVacNext] = useState('');
+
+        const [newHealthTitle, setNewHealthTitle] = useState('');
+        const [newHealthDesc, setNewHealthDesc] = useState('');
+        const [newHealthDoc, setNewHealthDoc] = useState('');
+
+        const currentPet = pets.find(p => p.id === selectedPetId) || pets[0];
+
+        const handleCreatePet = (e) => {
+          e.preventDefault();
+          if (!newPetName || !newPetBreed || !newPetAge) return;
+
+          const newPet = {
+            id: `pet-${Date.now()}`,
+            name: newPetName,
+            type: newPetType,
+            breed: newPetBreed,
+            age: newPetAge,
+            gender: newPetGender,
+            photo: PRESET_PHOTOS[selectedPhotoIdx],
+            weightHistory: [
+              { date: "Hoje", value: newPetType === 'cat' ? 4.0 : newPetType === 'dog' ? 12.5 : 1.2 }
+            ],
+            vaccinations: [
+              { id: `vac-init-${Date.now()}`, name: "Avaliação Primária", date: new Date().toISOString().split('T')[0], status: 'completed' }
+            ],
+            healthHistory: [
+              { id: `health-init-${Date.now()}`, date: new Date().toISOString().split('T')[0], title: "Perfil Criado", description: "O pet foi cadastrado no sistema do Pet Shop com sucesso!" }
+            ]
+          };
+
+          onAddPet(newPet);
+          onUnlockBadge("badge-1");
+
+          // Reset Form
+          setNewPetName('');
+          setNewPetBreed('');
+          setNewPetAge('');
+          setShowAddForm(false);
+        };
+
+        const submitWeight = (e) => {
+          e.preventDefault();
+          if (!newWeight || !currentPet) return;
+          const wNum = parseFloat(newWeight);
+          if (isNaN(wNum) || wNum <= 0) return;
+
+          const dateStr = newWeightDate || new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+          onAddWeight(currentPet.id, { date: dateStr, value: wNum });
+          setNewWeight('');
+          setNewWeightDate('');
+
+          if (currentPet.weightHistory.length >= 2) {
+            onUnlockBadge("badge-5");
+          }
+        };
+
+        const submitVaccine = (e) => {
+          e.preventDefault();
+          if (!newVacName || !newVacDate || !currentPet) return;
+
+          const record = {
+            id: `vac-${Date.now()}`,
+            name: newVacName,
+            date: newVacDate,
+            status: 'pending',
+            nextDueDate: newVacNext || undefined
+          };
+
+          onAddVaccine(currentPet.id, record);
+          setNewVacName('');
+          setNewVacDate('');
+          setNewVacNext('');
+        };
+
+        const markVaccineDone = (vacId) => {
+          if (!currentPet) return;
+          const targetVac = currentPet.vaccinations.find(v => v.id === vacId);
+          if (targetVac) {
+            onAddHealthRecord(currentPet.id, {
+              id: `health-vac-${Date.now()}`,
+              date: new Date().toISOString().split('T')[0],
+              title: `Imunização: ${targetVac.name}`,
+              description: `Dose da vacina aplicada com sucesso na clínica parceira. Próxima dose recomendada registrada em prontuário.`,
+              doctor: "Vacinador Credenciado"
+            });
+            onUnlockBadge("badge-2");
+          }
+        };
+
+        const submitHealthRecord = (e) => {
+          e.preventDefault();
+          if (!newHealthTitle || !newHealthDesc || !currentPet) return;
+
+          const record = {
+            id: `health-${Date.now()}`,
+            date: new Date().toISOString().split('T')[0],
+            title: newHealthTitle,
+            description: newHealthDesc,
+            doctor: newHealthDoc || 'Auto-registro do tutor'
+          };
+
+          onAddHealthRecord(currentPet.id, record);
+          setNewHealthTitle('');
+          setNewHealthDesc('');
+          setNewHealthDoc('');
+        };
+
+        const chartHeight = 120;
+        const chartWidth = 340;
+
+        return (
+          <div className="max-w-4xl mx-auto space-y-6 animate-fade-in" id="pet-profiles-container">
+            
+            {/* Top Pets Picker Row */}
+            <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col">
+                <h2 className="text-xl font-bold font-display tracking-tight text-slate-800 flex items-center gap-2">
+                  <Icon name="heart" className="w-5 h-5 text-rose-500" /> Meus Pets Cadastrados
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Gerencie a caderneta de vacinas e peso dos seus companheiros</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {pets.map((pet) => (
+                  <button
+                    key={pet.id}
+                    onClick={() => onSelectPet(pet.id)}
+                    className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all border ${
+                      selectedPetId === pet.id
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-800 scale-102 shadow-xs'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <img
+                      src={pet.photo}
+                      alt={pet.name}
+                      className="w-7 h-7 rounded-full object-cover border border-slate-200"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span>{pet.name}</span>
+                    {pet.type === 'dog' && <span className="text-[10px] bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded-md font-bold">Cão</span>}
+                    {pet.type === 'cat' && <span className="text-[10px] bg-fuchsia-100 text-fuchsia-800 px-1.5 py-0.5 rounded-md font-bold">Gato</span>}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-900 shadow-sm hover:scale-105 transition-all text-center border border-amber-505"
+                >
+                  <Icon name="plus" className="w-4 h-4" /> Cadastrar Pet
+                </button>
+              </div>
+            </div>
+
+            {/* Main Grid */}
+            {currentPet && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Left Card */}
+                <div className="md:col-span-1 bg-white rounded-3xl p-6 shadow-xs border border-slate-100 flex flex-col gap-5 justify-between">
+                  <div className="text-center space-y-3">
+                    <div className="relative inline-block mx-auto">
+                      <img
+                        src={currentPet.photo}
+                        alt={currentPet.name}
+                        className="w-28 h-28 rounded-full object-cover mx-auto ring-4 ring-emerald-100 border border-slate-200"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute bottom-1 right-2 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-md">
+                        <Icon name="activity" className="w-4 h-4" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-2xl font-bold font-display text-slate-800">{currentPet.name}</h3>
+                      <p className="text-sm font-medium text-slate-500 mt-1">{currentPet.breed}</p>
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-semibold">
+                          {currentPet.age}
+                        </span>
+                        <span className="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-semibold">
+                          {currentPet.gender}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Weight History Graphic */}
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Histórico de Peso (Kg)</span>
+                    
+                    {currentPet.weightHistory.length > 0 ? (
+                      <div className="pt-2">
+                        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full overflow-visible">
+                          <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3" />
+                          <line x1="0" y1="60" x2={chartWidth} y2="60" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3" />
+                          <line x1="0" y1="100" x2={chartWidth} y2="100" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3" />
+                          
+                          {(() => {
+                            const values = currentPet.weightHistory.map(w => w.value);
+                            const minVal = Math.min(...values) * 0.9;
+                            const maxVal = Math.max(...values) * 1.1;
+                            const range = maxVal - minVal || 1;
+
+                            const points = currentPet.weightHistory.map((w, idx) => {
+                              const x = (idx / (currentPet.weightHistory.length - 1 || 1)) * (chartWidth - 40) + 20;
+                              const y = chartHeight - ((w.value - minVal) / range) * (chartHeight - 40) - 20;
+                              return { x, y, val: w.value, date: w.date };
+                            });
+
+                            const pathD = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+                            return (
+                              <g>
+                                <path d={pathD} stroke="#10b981" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                {points.map((p, idx) => (
+                                  <g key={idx}>
+                                    <circle cx={p.x} cy={p.y} r="5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                                    <text x={p.x} y={p.y - 10} textAnchor="middle" fill="#0f172a" fontSize="10" fontWeight="bold">
+                                      {p.val}kg
+                                    </text>
+                                    <text x={p.x} y={chartHeight - 4} textAnchor="middle" fill="#64748b" fontSize="9">
+                                      {p.date}
+                                    </text>
+                                  </g>
+                                ))}
+                              </g>
+                            );
+                          })()}
+                        </svg>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400">Nenhum registro de peso inserido ainda.</p>
+                    )}
+
+                    {/* Weight Form */}
+                    <form onSubmit={submitWeight} className="flex gap-2 mt-4 pt-2 border-t border-slate-200">
+                      <input
+                        type="number"
+                        step="0.1"
+                        placeholder="Novo Peso (kg)"
+                        value={newWeight}
+                        onChange={(e) => setNewWeight(e.target.value)}
+                        className="w-1/2 text-xs border border-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-emerald-500 bg-white font-semibold"
+                        required
+                      />
+                      <button type="submit" className="w-1/2 bg-slate-800 text-white text-xs font-bold rounded-xl py-1.5 hover:bg-emerald-600 transition-all">
+                        Registrar
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Delete Profile button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        if (confirm(`Tem certeza de que deseja remover o cadastro de ${currentPet.name}?`)) {
+                          onDeletePet(currentPet.id);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-red-500 py-1.5 hover:bg-red-50 rounded-xl transition-all font-semibold"
+                    >
+                      <Icon name="trash" className="w-3.5 h-3.5" /> Excluir Perfil de {currentPet.name}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Area: Tabs */}
+                <div className="md:col-span-2 bg-white rounded-3xl shadow-xs border border-slate-100 flex flex-col">
+                  
+                  {/* Tabs Selector */}
+                  <div className="flex border-b border-slate-100 p-2 gap-2">
+                    <button
+                      onClick={() => setActiveTab('info')}
+                      className={`flex-1 py-3 text-center text-xs font-bold tracking-wide uppercase rounded-xl transition-all ${
+                        activeTab === 'info'
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      Resumo Geral
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('vaccines')}
+                      className={`flex-1 py-3 text-center text-xs font-bold tracking-wide uppercase rounded-xl transition-all ${
+                        activeTab === 'vaccines'
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      Vacinas ({currentPet.vaccinations.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('health')}
+                      className={`flex-1 py-3 text-center text-xs font-bold tracking-wide uppercase rounded-xl transition-all ${
+                        activeTab === 'health'
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      Histórico Clínico
+                    </button>
+                  </div>
+
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    {activeTab === 'info' && (
+                      <div className="space-y-6">
+                        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+                          <div className="p-2 h-9 w-9 bg-amber-400 text-slate-900 rounded-xl flex items-center justify-center">
+                            <Icon name="smile" className="w-5 h-5 font-bold" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-800">Prontuário Digital Geral - Nível de Cuidado Altíssimo!</h4>
+                            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                              Mantenha o peso monitorado e realize exames preventivos pelo menos uma vez por ano. O programa de fidelidade do {currentPet.name} conta com metas de saúde desbloqueáveis.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50 space-y-3">
+                            <h5 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                              <Icon name="shield" className="w-4 h-4 text-emerald-500" /> Próxima Vacina Prevista
+                            </h5>
+                            {currentPet.vaccinations.find(v => v.status === 'pending') ? (
+                              <div>
+                                <p className="text-sm font-bold text-slate-800">
+                                  {currentPet.vaccinations.find(v => v.status === 'pending')?.name}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  Previsão: {currentPet.vaccinations.find(v => v.status === 'pending')?.date}
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-emerald-600 font-bold">Todas as imunizações registradas estão regularizadas!</p>
+                            )}
+                          </div>
+
+                          <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50 space-y-3">
+                            <h5 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                              <Icon name="activity" className="w-4 h-4 text-emerald-500" /> Último Registro Clínico
+                            </h5>
+                            {currentPet.healthHistory.length > 0 ? (
+                              <div>
+                                <p className="text-sm font-bold text-slate-800 truncate">
+                                  {currentPet.healthHistory[currentPet.healthHistory.length - 1].title}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                  {currentPet.healthHistory[currentPet.healthHistory.length - 1].description}
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-slate-400">Nenhum evento médico listado ainda.</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Por que usar o prontuário digital?</span>
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            Lojas e clínicas credenciadas visualizam o prontuário de vacinas integrado, tornando sua visita para banho e tosa protegida e higienizada. Além disso, cada vacina regularizada acumula pontos na carteira do tutor.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === 'vaccines' && (
+                      <div className="space-y-5">
+                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                          {currentPet.vaccinations.map((vac) => (
+                            <div key={vac.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-3 text-xs">
+                              <div className="flex items-start gap-2.5">
+                                <div className={`p-1.5 h-7 w-7 rounded-lg flex items-center justify-center ${
+                                  vac.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                }`}>
+                                  <Icon name="shield" className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-slate-800">{vac.name}</p>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">
+                                    {vac.status === 'completed' ? `Aplicada em: ${vac.date}` : `Programada para: ${vac.date}`}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {vac.status === 'completed' ? (
+                                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-1 rounded-md">
+                                  Concluído
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => markVaccineDone(vac.id)}
+                                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] px-3 py-1 rounded-lg transition-all"
+                                >
+                                  Registrar Aplicação
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Schedule vaccination form */}
+                        <form onSubmit={submitVaccine} className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-white mt-4">
+                          <span className="text-xs font-bold text-slate-700 block">Registrar Vacina na Agenda</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input
+                              type="text"
+                              placeholder="Nome da Vacina (ex: Giardia)"
+                              value={newVacName}
+                              onChange={(e) => setNewVacName(e.target.value)}
+                              className="text-xs border border-slate-200 rounded-xl px-2.5 py-2 focus:outline-emerald-500 font-semibold"
+                              required
+                            />
+                            <input
+                              type="date"
+                              title="Data de Aplicação"
+                              value={newVacDate}
+                              onChange={(e) => setNewVacDate(e.target.value)}
+                              className="text-xs border border-slate-200 rounded-xl px-2.5 py-2 focus:outline-emerald-500 font-semibold"
+                              required
+                            />
+                            <button type="submit" className="bg-slate-900 border border-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl py-2 transition-all">
+                              Agendar Vacinação
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {activeTab === 'health' && (
+                      <div className="space-y-4">
+                        <div className="space-y-3 max-h-[190px] overflow-y-auto pr-1">
+                          {currentPet.healthHistory.map((h) => (
+                            <div key={h.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-800 flex items-center gap-1">
+                                  <Icon name="filetext" className="w-3.5 h-3.5 text-slate-400" /> {h.title}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-mono font-bold">{h.date}</span>
+                              </div>
+                              <p className="text-slate-600 leading-normal">{h.description}</p>
+                              {h.doctor && <p className="text-[10px] text-slate-500 font-semibold italic">Profissional: {h.doctor}</p>}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Add clinical log diary */}
+                        <form onSubmit={submitHealthRecord} className="p-4 rounded-2xl border border-slate-200 mt-3 space-y-2 bg-white">
+                          <span className="text-xs font-bold text-slate-700 block">Adicionar Prontuário Clínico</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              placeholder="Título do Prontuário (ex: Alergia a picada)"
+                              value={newHealthTitle}
+                              onChange={(e) => setNewHealthTitle(e.target.value)}
+                              className="text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-emerald-500 font-semibold"
+                              required
+                            />
+                            <input
+                              type="text"
+                              placeholder="Profissional (opcional)"
+                              value={newHealthDoc}
+                              onChange={(e) => setNewHealthDoc(e.target.value)}
+                              className="text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-emerald-500 font-semibold"
+                            />
+                          </div>
+                          <textarea
+                            placeholder="Descrição clínica detalhada do exame, reações, dietas ou recomendações médicas..."
+                            rows={2}
+                            value={newHealthDesc}
+                            onChange={(e) => setNewHealthDesc(e.target.value)}
+                            className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-emerald-500 resize-none font-semibold"
+                            required
+                          />
+                          <button type="submit" className="w-full bg-slate-900 text-white text-xs font-semibold rounded-xl py-2.5 hover:bg-emerald-600 transition-all font-bold">
+                            Registrar Prontuário
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Portal modal register new pet */}
+            {showAddForm && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs animate-fade-in" id="add-pet-modal">
+                <div className="bg-white rounded-3xl p-6 max-w-md w-full border border-slate-100 shadow-xl space-y-4 animate-scale-up">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold font-display text-slate-900 flex items-center gap-1.5">
+                      <Icon name="heart" className="w-5 h-5 text-emerald-500" /> Cadastrar Novo Pet
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddForm(false)}
+                      className="text-2xl text-slate-400 hover:text-slate-800 focus:outline-none"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleCreatePet} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 block">Nome do Animal</label>
+                      <input
+                        type="text"
+                        placeholder="ex: Pipoca"
+                        value={newPetName}
+                        onChange={(e) => setNewPetName(e.target.value)}
+                        className="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-emerald-500 font-semibold"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 block">Espécie</label>
+                        <select
+                          value={newPetType}
+                          onChange={(e) => setNewPetType(e.target.value)}
+                          className="w-full text-xs border border-slate-200 bg-white rounded-xl px-3.5 py-2.5 focus:outline-emerald-500 font-semibold"
+                        >
+                          <option value="dog">Cachorro</option>
+                          <option value="cat">Gato</option>
+                          <option value="rabbit">Coelho</option>
+                          <option value="bird">Pássaro</option>
+                          <option value="other">Outros</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 block">Gênero</label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setNewPetGender('Macho')}
+                            className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
+                              newPetGender === 'Macho'
+                                ? 'bg-emerald-500 border-emerald-500 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            Macho
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNewPetGender('Fêmea')}
+                            className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
+                              newPetGender === 'Fêmea'
+                                ? 'bg-emerald-500 border-emerald-500 text-white'
+                                : 'bg-slate-50 border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            Fêmea
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 block">Raça</label>
+                        <input
+                          type="text"
+                          placeholder="ex: SRD ou Golden"
+                          value={newPetBreed}
+                          onChange={(e) => setNewPetBreed(e.target.value)}
+                          className="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-emerald-500 font-semibold"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-600 block">Idade</label>
+                        <input
+                          type="text"
+                          placeholder="ex: 1 ano e 2 meses"
+                          value={newPetAge}
+                          onChange={(e) => setNewPetAge(e.target.value)}
+                          className="w-full text-xs border border-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-emerald-500 font-semibold"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-600 block">Escolha um Avatar</label>
+                      <div className="grid grid-cols-6 gap-2">
+                        {PRESET_PHOTOS.map((url, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedPhotoIdx(idx)}
+                            className={`relative rounded-xl overflow-hidden border-2 aspect-square transition-all ${
+                              selectedPhotoIdx === idx ? 'border-amber-400 scale-105' : 'border-slate-200 hover:opacity-80'
+                            }`}
+                          >
+                            <img src={url} alt="Preset animal" className="w-full h-full object-cover animate-fade-in" referrerPolicy="no-referrer" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm(false)}
+                        className="flex-1 py-3 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all"
+                      >
+                        Voltar
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 py-3 text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-sm"
+                      >
+                        Confirmar Cadastro
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // ==========================================
+      // VIEW: SERVICES & APPOINTMENTS BOOKER
+      // ==========================================
+      function Services({
+        pets,
+        selectedPetId,
+        appointments,
+        onAddAppointment,
+        onCancelAppointment,
+        onUnlockBadge,
+        onAddToActivityLog
+      }) {
+        const [activeService, setActiveService] = useState(SERVICE_TYPES[0]);
+        const [selectedPet, setSelectedPet] = useState(selectedPetId || (pets[0]?.id || ''));
+        const [selectedDate, setSelectedDate] = useState('');
+        const [selectedTime, setSelectedTime] = useState('14:00');
+        const [selectedProvider, setSelectedProvider] = useState(activeService.providers[0]);
+        const [extraInstructions, setExtraInstructions] = useState('');
+
+        const [showConfirmModal, setShowConfirmModal] = useState(false);
+        const [bookedDetails, setBookedDetails] = useState(null);
+
+        const handleSelectService = (service) => {
+          setActiveService(service);
+          setSelectedProvider(service.providers[0]);
+        };
+
+        const handleBookSubmit = (e) => {
+          e.preventDefault();
+          if (!selectedPet || !selectedDate || !selectedTime) {
+            alert("Por favor selecione a data e o pet para o agendamento.");
+            return;
+          }
+
+          const newAppointment = {
+            id: `app-${Date.now()}`,
+            petId: selectedPet,
+            serviceType: activeService.type,
+            serviceName: activeService.name,
+            date: selectedDate,
+            time: selectedTime,
+            extraNotes: extraInstructions || undefined,
+            price: activeService.price,
+            status: 'agendado',
+            providerName: selectedProvider
+          };
+
+          onAddAppointment(newAppointment);
+          setBookedDetails(newAppointment);
+
+          const targetPet = pets.find(p => p.id === selectedPet);
+          onAddToActivityLog(`Agendou ${activeService.name} para ${targetPet?.name || 'seu pet'} em ${selectedDate} às ${selectedTime}`);
+
+          if (activeService.type === 'banho_tosa') {
+            onUnlockBadge("badge-4");
+          } else {
+            onUnlockBadge("badge-2");
+          }
+
+          setShowConfirmModal(true);
+          setExtraInstructions('');
+        };
+
+        const currentPetData = pets.find(p => p.id === selectedPet) || pets[0];
+
+        return (
+          <div className="max-w-4xl mx-auto space-y-6 animate-fade-in" id="services-scheduler-container">
+            
+            {/* Loyalty Badge Alert Banner */}
+            <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h2 className="text-xl font-bold font-display text-slate-800 flex items-center gap-1.5">
+                  <Icon name="calendar" className="w-5 h-5 text-emerald-500" /> Agendamento de Serviços de Saúde & Estética
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Escolha o atendimento estético ou consultas médicas. Todos os profissionais são filiados ao conselho de veterinária.
+                </p>
+              </div>
+
+              <div className="bg-amber-50 text-amber-800 px-3.5 py-1.5 rounded-2xl text-xs font-bold border border-amber-205 flex items-center gap-1">
+                <Icon name="sparkles" className="w-4 h-4 text-amber-500" /> 100% de carinho assegurado
+              </div>
+            </div>
+
+            {/* Layout Configuration */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Left Column: List Services Cards */}
+              <div className="md:col-span-2 space-y-4">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block">1. Selecione o Mimo ou Atendimento</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {SERVICE_TYPES.map((service) => {
+                    const isSelected = activeService.type === service.type;
+                    return (
+                      <div
+                        key={service.type}
+                        onClick={() => handleSelectService(service)}
+                        className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between gap-4 relative group ${
+                          isSelected
+                            ? 'border-emerald-500 bg-white scale-102 shadow-xs'
+                            : 'border-slate-100 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className={`p-2.5 rounded-2xl ${service.iconColor}`}>
+                              <Icon name={service.icon} className="w-5 h-5" />
+                            </div>
+                            
+                            <span className="text-xs font-bold font-mono text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full">
+                              R$ {service.price.toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 className="font-bold text-sm text-slate-800 mt-1 leading-snug group-hover:text-emerald-700 transition">
+                              {service.name}
+                            </h4>
+                            <p className="text-[11px] text-slate-400 mt-1 line-clamp-3 leading-relaxed">{service.description}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-[10px] text-slate-500 flex items-center justify-between border-t pt-2 mt-2 font-bold uppercase tracking-wider">
+                          <span>Tempo sugerido: {service.duration}</span>
+                          <span className="text-emerald-600 font-bold group-hover:underline flex items-center">
+                            Agendar &rarr;
+                          </span>
+                        </div>
+
+                        {isSelected && (
+                          <div className="absolute right-3 top-3 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping pointer-events-none" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2 text-xs leading-relaxed">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Instruções Importantes</span>
+                  <ul className="list-disc list-inside space-y-1 text-slate-600 font-semibold">
+                    <li>Caso escolha Banho, traga brinquedos favoritos para acalmar filhotes.</li>
+                    <li>A Telemedicina é realizada dentro do nosso canal seguro por videochamada.</li>
+                    <li>Vacinas necessitam de avaliação prévia de temperatura, inclusa sem custo.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Right Column: Reservation Form */}
+              <div className="md:col-span-1 bg-white rounded-3xl p-5 border border-slate-100 shadow-xs">
+                <form onSubmit={handleBookSubmit} className="space-y-5">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest block">2. Personalize o Agendamento</h3>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="pet-picker-select" className="text-xs font-bold text-slate-600 block">Qual pet irá receber o cuidado?</label>
+                    <select
+                      id="pet-picker-select"
+                      value={selectedPet}
+                      onChange={(e) => setSelectedPet(e.target.value)}
+                      className="w-full text-xs border border-slate-200 bg-white rounded-xl p-2.5 focus:outline-emerald-500 font-semibold"
+                      required
+                    >
+                      <option value="">Selecione um Pet</option>
+                      {pets.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.breed})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="provider-picker-select" className="text-xs font-bold text-slate-600 block">Profissional de Preferência</label>
+                    <select
+                      id="provider-picker-select"
+                      value={selectedProvider}
+                      onChange={(e) => setSelectedProvider(e.target.value)}
+                      className="w-full text-xs border border-slate-200 bg-white rounded-xl p-2.5 focus:outline-emerald-500 font-semibold"
+                      required
+                    >
+                      {activeService.providers.map((p, i) => (
+                        <option key={i} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="date-picker-input" className="text-xs font-bold text-slate-600 block">Selecione o Dia</label>
+                    <input
+                      id="date-picker-input"
+                      type="date"
+                      min="2026-05-28"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-full text-xs border border-slate-200 rounded-xl p-3 focus:outline-emerald-500 bg-slate-50 font-bold"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-600 block">Horário Disponível</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {TIME_SLOTS.map((time) => (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => setSelectedTime(time)}
+                          className={`py-2 rounded-xl text-xs font-mono font-bold border transition-all ${
+                            selectedTime === time
+                              ? 'bg-slate-900 text-white border-slate-900 scale-102 shadow-xs'
+                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="extra-instructions-textarea" className="text-xs font-bold text-slate-600 block">Instruções especiais ou sintomas</label>
+                    <textarea
+                      id="extra-instructions-textarea"
+                      placeholder="ex: Pipoca tem medo de secador de cabelo..."
+                      rows={2}
+                      value={extraInstructions}
+                      onChange={(e) => setExtraInstructions(e.target.value)}
+                      className="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-emerald-500 resize-none bg-slate-50 focus:bg-white font-semibold"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl text-xs hover:scale-102 active:scale-98 transition-all hover:shadow-xs flex items-center justify-center gap-1.5"
+                    >
+                      Confirmar Agendamento <Icon name="clock" className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] text-slate-400 pt-1.5 block text-center font-bold">Sem taxa de cancelamento prévio de 24h.</span>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* Existing Appointments List */}
+            <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-100 mt-8 space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 font-display">
+                  <Icon name="clock" className="text-emerald-500 w-5 h-5" /> Seus Agendamentos Ativos
+                </h3>
+                <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold">
+                  {appointments.length} {appointments.length === 1 ? 'agendamento' : 'agendamentos'}
+                </span>
+              </div>
+
+              {appointments.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 space-y-2">
+                  <Icon name="calendar" className="w-10 h-10 text-slate-200 mx-auto" />
+                  <p className="text-xs font-semibold text-slate-500">Nenhum serviço agendado no momento.</p>
+                  <p className="text-[11px] text-slate-400 font-semibold">Escolha um serviço acima para começar!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {appointments.map((appt) => {
+                    const pet = pets.find(p => p.id === appt.petId);
+                    return (
+                      <div key={appt.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4 hover:border-slate-300 transition-colors">
+                        <div className="space-y-1">
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full uppercase text-[9px]">
+                            {appt.serviceType === 'banho_tosa' ? 'Estética' : appt.serviceType === 'vacina' ? 'Vacina' : 'Consulta'}
+                          </span>
+                          <h4 className="font-bold text-slate-800 text-sm leading-snug mt-1">{appt.serviceName}</h4>
+                          <p className="text-xs text-slate-500 font-semibold">Pet: <span className="font-bold text-slate-700">{pet?.name || 'Pet'}</span></p>
+                          <p className="text-[11px] text-slate-400 font-semibold">Profissional: {appt.providerName}</p>
+                          {appt.extraNotes && (
+                            <p className="text-[10px] text-slate-400 bg-white border border-slate-100 rounded-lg p-1.5 mt-1.5 italic font-semibold">
+                              obs: {appt.extraNotes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-3 justify-between h-full min-h-[70px]">
+                          <div className="text-right">
+                            <p className="font-extrabold text-slate-800 text-xs font-mono">{appt.date}</p>
+                            <p className="text-xs text-emerald-600 font-bold uppercase">{appt.time}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onCancelAppointment(appt.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Cancelar agendamento"
+                          >
+                            <Icon name="trash" className="w-4.5 h-4.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Confirmation Modal Receipt */}
+            {showConfirmModal && bookedDetails && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs animate-fade-in" id="booking-confirmation-modal">
+                <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-100 shadow-2xl space-y-4 text-center animate-scale-up">
+                  <div className="p-3 bg-emerald-100 text-emerald-700 rounded-full w-14 h-14 flex items-center justify-center mx-auto animate-bounce">
+                    <Icon name="checkcircle" className="w-8 h-8" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-bold font-display text-slate-800">Cuidado Confirmado!</h3>
+                    <p className="text-xs text-slate-500 leading-normal">Agendamento concluído e lançado no prontuário digital com sucesso.</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-left text-xs space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-semibold">Pet Selecionado:</span>
+                      <span className="font-bold text-slate-800">{currentPetData?.name || 'Seu Pet'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-semibold">Serviço:</span>
+                      <span className="font-bold text-slate-800 truncate max-w-[150px]">{bookedDetails.serviceName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-semibold">Profissional:</span>
+                      <span className="font-bold text-slate-800 text-[11px]">{bookedDetails.providerName}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 text-slate-500">
+                      <span className="text-slate-400 font-semibold">Horário:</span>
+                      <span className="font-bold text-slate-900 font-mono text-[11px]">{bookedDetails.date} às {bookedDetails.time}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 font-bold text-emerald-800 text-sm">
+                      <span>Valor:</span>
+                      <span>R$ {bookedDetails.price.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-yellow-50 text-yellow-800 rounded-xl text-[10px] leading-relaxed flex items-center gap-1.5 text-left font-bold border border-yellow-200">
+                    <Icon name="shieldcheck" className="w-6 h-6 text-yellow-500 flex-shrink-0" />
+                    <span>Você acaba de ganhar 80 PONTOS de fidelidade de saúde por este agendamento preventivo!</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowConfirmModal(false);
+                      setBookedDetails(null);
+                    }}
+                    className="w-full bg-slate-950 text-white font-bold py-3 text-xs rounded-xl transition-all"
+                  >
+                    Voltar à Agenda Geral
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // ==========================================
+      // VIEW: MAIN APPLICATION SHELL (APP)
+      // ==========================================
+      function App() {
+        const [activeScreen, setActiveScreen] = useState('dashboard');
+        
+        const [isLoggedIn, setIsLoggedIn] = useState(() => {
+          return localStorage.getItem('pet_club_logged_in') === 'true';
+        });
+
+        const [userProfile, setUserProfile] = useState(() => {
+          const saved = localStorage.getItem('pet_club_user_profile');
+          if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+          }
+          return initialUserProfile;
+        });
+
+        const [pets, setPets] = useState(() => {
+          const saved = localStorage.getItem('pet_club_pets');
+          if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+          }
+          return initialPets;
+        });
+
+        const [selectedPetId, setSelectedPetId] = useState(() => {
+          return pets[0]?.id || '';
+        });
+
+        const [appointments, setAppointments] = useState(() => {
+          const saved = localStorage.getItem('pet_club_appointments');
+          if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+          }
+          return [
+            {
+              id: "app-default-1",
+              petId: "pet-1",
+              serviceType: "consulta_presencial",
+              serviceName: "Consulta Geral Presencial VIP",
+              date: "2026-06-05",
+              time: "10:30",
+              price: 150.00,
+              status: "agendado",
+              providerName: "Dr. Roberto Neves"
+            }
+          ];
+        });
+
+        const [badges, setBadges] = useState(initialBadges);
+        
+        const [activityLogs, setActivityLogs] = useState(() => {
+          const saved = localStorage.getItem('pet_club_activity_logs');
+          if (saved) {
+            try { return JSON.parse(saved); } catch (e) {}
+          }
+          return [
+            "Aplicativo inicializado com sucesso.",
+            "Pets sincronizados no prontuário digital local.",
+            "Badge 'Membro da Guilda' desbloqueado (+50 XP)."
+          ];
+        });
+
+        const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+        // Sync values with localStorage
+        useEffect(() => {
+          localStorage.setItem('pet_club_pets', JSON.stringify(pets));
+        }, [pets]);
+
+        useEffect(() => {
+          localStorage.setItem('pet_club_appointments', JSON.stringify(appointments));
+        }, [appointments]);
+
+        useEffect(() => {
+          localStorage.setItem('pet_club_activity_logs', JSON.stringify(activityLogs));
+        }, [activityLogs]);
+
+        const handleAddPet = (newPet) => {
+          setPets(prev => [...prev, newPet]);
+          setSelectedPetId(newPet.id);
+          addToActivityLog(`Cadastrou o pet ${newPet.name} (${newPet.breed}).`);
+        };
+
+        const handleDeletePet = (petId) => {
+          const updated = pets.filter(p => p.id !== petId);
+          setPets(updated);
+          if (selectedPetId === petId && updated.length > 0) {
+            setSelectedPetId(updated[0].id);
+          }
+          addToActivityLog(`Removeu o cadastro do pet.`);
+        };
+
+        const handleAddWeight = (petId, record) => {
+          setPets(prev => prev.map(p => {
+            if (p.id === petId) {
+              return {
+                ...p,
+                weightHistory: [...p.weightHistory, record]
+              };
+            }
+            return p;
+          }));
+          addToActivityLog(`Registrou novo peso de ${record.value}kg para o pet.`);
+        };
+
+        const handleAddVaccine = (petId, record) => {
+          setPets(prev => prev.map(p => {
+            if (p.id === petId) {
+              return {
+                ...p,
+                vaccinations: [...p.vaccinations, record]
+              };
+            }
+            return p;
+          }));
+          addToActivityLog(`Inseriu agendamento de imunização (${record.name}) no prontuário.`);
+        };
+
+        const handleAddHealthRecord = (petId, record) => {
+          setPets(prev => prev.map(p => {
+            if (p.id === petId) {
+              return {
+                ...p,
+                healthHistory: [...p.healthHistory, record]
+              };
+            }
+            return p;
+          }));
+          addToActivityLog(`Adicionou observação de saúde: "${record.title}".`);
+        };
+
+        const handleAddAppointment = (appt) => {
+          setAppointments(prev => [...prev, appt]);
+          setPets(pats => pats.map(p => {
+            if (p.id === appt.petId) {
+              return {
+                ...p,
+                healthHistory: [
+                  ...p.healthHistory,
+                  {
+                    id: `health-booked-${appt.id}`,
+                    date: appt.date,
+                    title: `Reservado: ${appt.serviceName}`,
+                    description: `Serviço agendado às ${appt.time} conduzido por ${appt.providerName}. Valor: R$ ${appt.price.toFixed(2)}.`,
+                    doctor: appt.providerName
+                  }
+                ]
+              };
+            }
+            return p;
+          }));
+          handleAddPoints(80);
+        };
+
+        const handleCancelAppointment = (apptId) => {
+          setAppointments(prev => prev.filter(appt => appt.id !== apptId));
+          setPets(pats => pats.map(p => ({
+            ...p,
+            healthHistory: p.healthHistory.filter(h => h.id !== `health-booked-${apptId}`)
+          })));
+          addToActivityLog(`Cancelou um agendamento de serviço.`);
+        };
+
+        const handleLoginSuccess = (profile) => {
+          setUserProfile(profile);
+          setIsLoggedIn(true);
+          localStorage.setItem('pet_club_logged_in', 'true');
+          localStorage.setItem('pet_club_user_profile', JSON.stringify(profile));
+          addToActivityLog(`Sessão iniciada como ${profile.name}.`);
+        };
+
+        const handleLogout = () => {
+          setIsLoggedIn(false);
+          localStorage.removeItem('pet_club_logged_in');
+          localStorage.removeItem('pet_club_user_profile');
+          addToActivityLog('Sessão encerrada.');
+        };
+
+        const handleAddPoints = (pts) => {
+          setUserProfile(prev => {
+            const updated = {
+              ...prev,
+              points: prev.points + pts
+            };
+            localStorage.setItem('pet_club_user_profile', JSON.stringify(updated));
+            return updated;
+          });
+          addToActivityLog(`Acumulou +${pts} XP no programa de fidelidade.`);
+        };
+
+        const handleUnlockBadge = (badgeId) => {
+          setBadges(prev => prev.map(b => {
+            if (b.id === badgeId && !b.unlocked) {
+              handleAddPoints(b.points);
+              return {
+                ...b,
+                unlocked: true,
+                unlockedAt: new Date().toLocaleDateString('pt-BR')
+              };
+            }
+            return b;
+          }));
+        };
+
+        const addToActivityLog = (log) => {
+          setActivityLogs(prev => [log, ...prev].slice(0, 15));
+        };
+
+        const activePet = pets.find(p => p.id === selectedPetId) || pets[0];
+
+        if (!isLoggedIn) {
+          return <Login onLoginSuccess={handleLoginSuccess} />;
+        }
+
+        return (
+          <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-emerald-500 selection:text-white" id="main-application-frame">
+            
+            {/* Header Navigation Bar */}
+            <header className="bg-white border-b border-slate-100 py-4 px-6 sticky top-0 z-40 shadow-xs" id="navigation-top-header">
+              <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
+                
+                {/* Brand Logo & Name */}
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-600 text-white h-10 w-10 rounded-2xl flex items-center justify-center shadow-md shadow-emerald-500/10 font-black">
+                    <span className="font-display text-base tracking-tighter">PET</span>
+                  </div>
+                  <div>
+                    <h1 className="text-sm font-extrabold font-display tracking-tight text-slate-800">PET CLUB</h1>
+                    <p className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Agendamentos e Pets</p>
+                  </div>
+                </div>
+
+                {/* Desk Navigation Tabs */}
+                <nav className="hidden md:flex items-center gap-1.5" id="navigation-rails-tabs">
+                  <button
+                    onClick={() => setActiveScreen('dashboard')}
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                      activeScreen === 'dashboard'
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                    }`}
+                  >
+                    Painel Geral
+                  </button>
+                  <button
+                    onClick={() => setActiveScreen('pets')}
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                      activeScreen === 'pets'
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                    }`}
+                  >
+                    Meus Pets
+                  </button>
+                  <button
+                    onClick={() => setActiveScreen('services')}
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
+                      activeScreen === 'services'
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                    }`}
+                  >
+                    Agendamentos
+                  </button>
+                </nav>
+
+                {/* User Session Indicators */}
+                <div className="hidden md:flex items-center gap-3">
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-slate-800 block leading-tight">{userProfile.name}</span>
+                    <span className="text-[10px] text-slate-400 font-bold">Tutor</span>
+                  </div>
+                  
+                  <img
+                    src={userProfile.avatar}
+                    alt={userProfile.name}
+                    className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-100"
+                    referrerPolicy="no-referrer"
+                  />
+
+                  <button
+                    onClick={handleLogout}
+                    className="ml-1 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200"
+                    title="Sair da conta"
+                  >
+                    <Icon name="logout" className="w-4.5 h-4.5" />
+                  </button>
+                </div>
+
+                {/* Mobile menu toggle action */}
+                <div className="md:hidden flex items-center">
+                  <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition"
+                    aria-label="Abrir menu"
+                  >
+                    {mobileMenuOpen ? <Icon name="x" className="w-6 h-6" /> : <Icon name="menu" className="w-6 h-6" />}
+                  </button>
+                </div>
+
+              </div>
+            </header>
+
+            {/* Mobile Menu Overlay Drawer */}
+            {mobileMenuOpen && (
+              <div className="md:hidden bg-white border-b border-slate-100 px-6 py-4 space-y-3 z-30 animate-fade-in">
+                <button
+                  onClick={() => { setActiveScreen('dashboard'); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider block transition ${
+                    activeScreen === 'dashboard' ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Painel Geral
+                </button>
+                <button
+                  onClick={() => { setActiveScreen('pets'); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider block transition ${
+                    activeScreen === 'pets' ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Meus Pets
+                </button>
+                <button
+                  onClick={() => { setActiveScreen('services'); setMobileMenuOpen(false); }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider block transition ${
+                    activeScreen === 'services' ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Agendamentos
+                </button>
+
+                {/* Mobile User details & logout */}
+                <div className="border-t pt-3 mt-2 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <img src={userProfile.avatar} alt={userProfile.name} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
+                    <div>
+                      <p className="font-bold text-slate-800">{userProfile.name}</p>
+                      <p className="text-[10px] text-slate-400 font-bold">Tutor</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-bold transition text-[11px]"
+                  >
+                    <Icon name="logout" className="w-3.5 h-3.5" /> Sair
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Main viewports */}
+            <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6" id="applet-viewport-mount">
+              
+              {/* VIEW 1: DYNAMIC INTERACTIVE DASHBOARD */}
+              {activeScreen === 'dashboard' && (
+                <div className="space-y-6 animate-fade-in" id="dashboard-tab-view">
+                  
+                  {/* Premium Ambient Banner card */}
+                  <div className="bg-emerald-600 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg shadow-emerald-600/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div className="space-y-2 z-10">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-100 bg-emerald-500/30 px-3 py-1 rounded-full">
+                        Programa de Cuidado Local
+                      </span>
+                      <h2 className="text-2xl sm:text-3xl font-black font-display tracking-tight">
+                        Olá, {userProfile.name}!
+                      </h2>
+                      <p className="text-sm text-emerald-50 leading-relaxed max-w-lg font-medium">
+                        Agende consultas, banhos e gerencie a saúde dos seus pets de forma simples.
+                      </p>
+                      <div className="pt-2 flex flex-wrap gap-2 text-xs font-semibold">
+                        <button
+                          onClick={() => setActiveScreen('services')}
+                          className="bg-amber-400 hover:bg-amber-300 text-slate-900 px-4 py-2.5 rounded-xl shadow-sm hover:scale-102 transition duration-200 font-bold"
+                        >
+                          Agendar Novo Serviço
+                        </button>
+                        <button
+                          onClick={() => setActiveScreen('pets')}
+                          className="bg-white/10 hover:bg-white/15 text-white border border-white/20 px-4 py-2.5 rounded-xl hover:scale-102 transition duration-200"
+                        >
+                          Ver Meus Pets
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center p-4 bg-white/10 rounded-2xl border border-white/15 z-10 min-w-[120px] text-center">
+                      <span className="text-[9px] font-extrabold uppercase text-emerald-100 tracking-wider">Pontos Fidelidade</span>
+                      <span className="text-3xl font-black font-mono mt-1 text-amber-300">{userProfile.points}</span>
+                      <span className="text-[9px] font-semibold text-emerald-50 mt-1">XP ACUMULADOS</span>
+                    </div>
+                  </div>
+
+                  {/* Main Grid: Left Side Summary lists, Right Side quick widgets */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Left Columns Column space */}
+                    <div className="lg:col-span-2 space-y-6">
+                      
+                      {/* Active Pet health Summary Card */}
+                      <div className="bg-white rounded-3xl p-6 border border-slate-100 space-y-4 shadow-xs">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 font-display">
+                            <Icon name="smile" className="text-emerald-500 w-5 h-5" /> Pet Selecionado: {activePet?.name || 'Max'}
+                          </h3>
+                          <button
+                            onClick={() => setActiveScreen('pets')}
+                            className="text-xs text-emerald-600 hover:underline font-bold flex items-center gap-1"
+                          >
+                            Ver Detalhes &rarr;
+                          </button>
+                        </div>
+
+                        {/* Pet switcher */}
+                        <div className="flex gap-2 flex-wrap">
+                          {pets.map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => setSelectedPetId(p.id)}
+                              className={`flex items-center gap-2 p-1.5 pr-4 rounded-full border text-xs font-semibold transition-all ${
+                                selectedPetId === p.id 
+                                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
+                                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                              }`}
+                            >
+                              <img src={p.photo} alt={p.name} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
+                              <span>{p.name}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {activePet && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 animate-fade-in">
+                            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex flex-col justify-between">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase">Peso Atual</span>
+                              <div className="py-2">
+                                <span className="text-2xl font-extrabold font-display text-slate-800">
+                                  {activePet.weightHistory[activePet.weightHistory.length - 1]?.value || 0}
+                                </span>
+                                <span className="text-sm text-slate-600 font-semibold ml-0.5">kg</span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-semibold">Registrado em {activePet.weightHistory[activePet.weightHistory.length - 1]?.date}</p>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex flex-col justify-between">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase">Vacinas Aplicadas</span>
+                              <div className="py-2">
+                                <span className="text-2xl font-extrabold font-display text-emerald-800">
+                                  {activePet.vaccinations.filter(v => v.status === 'completed').length}
+                                </span>
+                                <span className="text-xs text-slate-600 font-bold ml-1">concluídas</span>
+                              </div>
+                              <p className="text-[10px] text-slate-600 font-semibold">
+                                {activePet.vaccinations.some(v => v.status === 'pending') ? "⚠️ Vacinas pendentes" : "✓ Tudo em dia"}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Scheduled appointments Summary Panel */}
+                      <div className="bg-white rounded-3xl p-6 border border-slate-100 space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 font-display">
+                            <Icon name="calendar" className="w-5 h-5 text-emerald-500" /> Próximos Atendimentos Agendados
+                          </h3>
+                          <button
+                            onClick={() => setActiveScreen('services')}
+                            className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl font-bold transition duration-200"
+                          >
+                            + Agendar Novo
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {appointments.length === 0 ? (
+                            <div className="text-center py-8 text-slate-400 space-y-2 animate-fade-in">
+                              <Icon name="calendar" className="w-10 h-10 text-slate-200 mx-auto" />
+                              <p className="text-xs font-semibold text-slate-500">Nenhum atendimento agendado na lista.</p>
+                              <p className="text-[10px] text-slate-400 font-semibold">Marque consultas ou banhos clicando no botão acima.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                              {appointments.map((appt) => {
+                                const pData = pets.find(p => p.id === appt.petId);
+                                return (
+                                  <div key={appt.id} className="p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-start justify-between gap-4 transition-all duration-200">
+                                    <div className="space-y-1">
+                                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                        {appt.serviceType === 'banho_tosa' ? 'Banho e Tosa' : appt.serviceType === 'vacina' ? 'Vacina' : 'Consulta'}
+                                      </span>
+                                      <h4 className="font-bold text-slate-800 text-xs sm:text-sm leading-snug mt-1">{appt.serviceName}</h4>
+                                      <p className="text-[11px] text-slate-500 font-semibold">Pet: <span className="font-semibold text-slate-700">{pData?.name || 'Max'}</span></p>
+                                      <p className="text-[10px] text-slate-400 font-semibold">Clínico: {appt.providerName}</p>
+                                    </div>
+                                    <div className="flex flex-col items-end justify-between h-full min-h-[70px]">
+                                      <div className="text-right">
+                                        <p className="font-extrabold text-slate-800 text-xs font-mono">{appt.date}</p>
+                                        <p className="text-xs text-emerald-600 font-bold uppercase">{appt.time}</p>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCancelAppointment(appt.id)}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Cancelar agendamento"
+                                      >
+                                        <Icon name="trash" className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Right Column: Veterinary Plantão & tips */}
+                    <div className="lg:col-span-1 space-y-6">
+                      
+                      {/* Clinic Info 24h Emergency */}
+                      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-4">
+                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest block font-display flex items-center gap-1.5">
+                          <Icon name="activity" className="w-4 h-4 text-emerald-500" /> Plantão Veterinário 24h
+                        </h4>
+                        <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+                          Em caso de emergência ou sintomas graves, entre em contato direto com a clínica de plantão ou traga seu pet imediatamente.
+                        </p>
+                        
+                        <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl space-y-2 text-xs">
+                          <p className="font-bold text-rose-800">Hospital Veterinário Neon Pet 24h</p>
+                          <p className="text-rose-700 text-[11px] font-semibold">Rua Augusta, 850 - Jardins, São Paulo</p>
+                          <p className="font-bold text-rose-800 font-mono mt-1 flex items-center gap-1">
+                            📞 (11) 3214-5500
+                          </p>
+                        </div>
+
+                        <div className="text-[10px] text-slate-400 border-t border-slate-100 pt-3 font-semibold">
+                          <p className="font-semibold text-slate-500">Horário de Atendimento Normal:</p>
+                          <p className="mt-0.5">Segunda a Sábado, das 08h às 20h.</p>
+                        </div>
+                      </div>
+
+                      {/* Care Health Tip */}
+                      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-3">
+                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest block font-display">
+                          Dica de Saúde Pet
+                        </h4>
+                        <p className="text-xs text-slate-600 leading-relaxed font-semibold">
+                          Mantenha as vacinas e a desparasitação em dia para garantir que seu amiguinho esteja protegido contra as principais viroses e verminoses caninas e felinas.
+                        </p>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 2: PET PROFILES MANAGER */}
+              {activeScreen === 'pets' && (
+                <PetProfiles 
+                  pets={pets}
+                  selectedPetId={selectedPetId}
+                  onSelectPet={setSelectedPetId}
+                  onAddPet={handleAddPet}
+                  onDeletePet={handleDeletePet}
+                  onAddWeight={handleAddWeight}
+                  onAddVaccine={handleAddVaccine}
+                  onAddHealthRecord={handleAddHealthRecord}
+                  onUnlockBadge={handleUnlockBadge}
+                />
+              )}
+
+              {/* VIEW 3: SCHEDULING SERVICES AND RESERVATIONS */}
+              {activeScreen === 'services' && (
+                <Services 
+                  pets={pets}
+                  selectedPetId={selectedPetId}
+                  appointments={appointments}
+                  onAddAppointment={handleAddAppointment}
+                  onCancelAppointment={handleCancelAppointment}
+                  onUnlockBadge={handleUnlockBadge}
+                  onAddToActivityLog={addToActivityLog}
+                />
+              )}
+
+            </main>
+
+            {/* Footer with static links */}
+            <footer className="bg-white border-t border-slate-100 py-6 px-6 mt-12 text-center text-xs text-slate-400 font-medium">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <p>© 2026 Pet Club. Todos os direitos reservados. Projeto autônomo local.</p>
+                <div className="flex gap-4">
+                  <button onClick={() => alert("Termos de Serviço")} className="hover:underline font-bold">Termos</button>
+                  <button onClick={() => alert("Política de Privacidade")} className="hover:underline font-bold">Privacidade</button>
+                  <button onClick={() => alert("Central de Atendimento: 0800-PET-CLUB")} className="hover:underline font-bold text-emerald-600">Ajuda</button>
+                </div>
+              </div>
+            </footer>
+
+          </div>
+        );
+      }
+
+      // Render the App
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>

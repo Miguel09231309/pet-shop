@@ -1,0 +1,6 @@
+{
+  "name": "Pet Shop & Health Portal",
+  "description": "Aplicativo premium completo de Pet Shop, agendamentos, telemedicina, rastreamento de entregas, fidelidade e gestão de saúde do pet.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+}
+
+/* Custom soft background texture and pulse overlays */
+body {
+  font-family: var(--font-sans);
+  background-color: #f7f9fa;
+  color: #1e293b;
+}
+
+.glow-neon-primary {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+}
+
+.glow-neon-secondary {
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
+}
+
