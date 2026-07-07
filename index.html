@@ -4,13 +4,841 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PET CLUB - Agendamentos e Pets</title>
+  <title>PET CLUB - Portal do Tutor</title>
   
-  <!-- FontAwesome Icons (if used by any components) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
   <div id="root"></div>
-  <script type="module" src="/src/index.tsx"></script>
+
+  <!-- React & ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- STATIC DATASETS ---
+    const initialUserProfile = {
+      name: "Mariana Silva",
+      email: "mariana.silva@petmail.com",
+      points: 120,
+      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150"
+    };
+
+    const initialPetsData = [
+      {
+        id: "p1",
+        name: "Max",
+        breed: "Golden Retriever",
+        age: "2 anos",
+        gender: "Macho",
+        photo: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=250",
+        weightHistory: [{ date: "Jan", value: 29 }, { date: "Mar", value: 31 }, { date: "Mai", value: 32 }],
+        vaccinations: [
+          { id: "v1", name: "Antirrábica", date: "2026-03-10", status: "completed" },
+          { id: "v2", name: "Gripe H1N1 Pet", date: "2026-06-15", status: "pending" }
+        ],
+        healthHistory: [
+          { id: "h1", date: "2026-04-15", title: "Check-up Geral", description: "Excelente condicionamento físico e batimentos estáveis.", doctor: "Dr. Roberto" }
+        ]
+      },
+      {
+        id: "p2",
+        name: "Luna",
+        breed: "Siamês",
+        age: "1 ano",
+        gender: "Fêmea",
+        photo: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=250",
+        weightHistory: [{ date: "Fev", value: 3.8 }, { date: "Mai", value: 4.2 }],
+        vaccinations: [{ id: "v3", name: "Quádrupla Felina", date: "2026-05-01", status: "completed" }],
+        healthHistory: [{ id: "h2", date: "2026-05-01", title: "Avaliação Nutricional", description: "Peso ideal para a idade.", doctor: "Dra. Elza" }]
+      }
+    ];
+
+    const catalogProducts = [
+      { id: "pr1", name: "Ração Premium Gourmet Cães", category: "ração", price: 189.90, oldPrice: 219.00, rating: 4.9, image: "https://images.unsplash.com/photo-1589723930112-f8c21e27a9a0?auto=format&fit=crop&q=80&w=200", desc: "Nutrição super premium balanceada livre de corantes." },
+      { id: "pr2", name: "Arranhador Castle Cats", category: "acessórios", price: 124.50, rating: 4.8, image: "https://images.unsplash.com/photo-1545249390-6bdfa286032f?auto=format&fit=crop&q=80&w=200", desc: "Sisal natural super resistente para desgastar unhas." },
+      { id: "pr3", name: "Bolinha Neon Interativa", category: "brinquedos", price: 29.90, oldPrice: 39.90, rating: 4.7, image: "https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&q=80&w=200", desc: "Brilha no escuro para divertidas sessões noturnas." }
+    ];
+
+    const partnerClinics = [
+      { id: "c1", name: "Hospital Veterinário Neon 24h", address: "Rua Augusta, 850 - Jardins", phone: "(11) 3214-5500", services: ["Pronto-Socorro", "Internação", "Vacinas"], coords: { x: 30, y: 35 } },
+      { id: "c2", name: "Spa Felino & Canino Jardins", address: "Alameda Lorena, 1420 - Jardins", phone: "(11) 3088-1240", services: ["Estética", "Tosa", "Banhos Premium"], coords: { x: 70, y: 55 } }
+    ];
+
+    const initialBadges = [
+      { id: "b1", title: "Guardião Fiel", desc: "Cadastrou um pet no portal", icon: "❤️", points: 50, unlocked: true },
+      { id: "b2", title: "Super Protetor", desc: "Manteve vacinação em dia", icon: "🛡️", points: 100, unlocked: true },
+      { id: "b3", title: "Doador de Mimos", desc: "Compre ração no marketplace", icon: "🎁", points: 80, unlocked: false }
+    ];
+
+    const blogPosts = [
+      { id: "bp1", title: "Como hidratar pets no inverno?", category: "Saúde", date: "24 Mai 2026", image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&q=80&w=200", summary: "Dicas de como incentivar a ingestão de água quando as temperaturas caem para evitar infecções.", content: "No frio, pets bebem menos água. Oferecer água morna misturada na ração úmida, manter fontes de água corrente e espalhar mais potes pela casa ajudam a combater a desidratação preventiva." },
+      { id: "bp2", title: "Enriquecimento ambiental para felinos", category: "Comportamento", date: "12 Mai 2026", image: "https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a?auto=format&fit=crop&q=80&w=200", summary: "Entenda como pequenos brinquedos artesanais e nichos evitam o estresse felino.", content: "Prateleiras aéreas, caixas vazias e brinquedos de corda que liberam sachê estimulam o instinto caçador do gato, reduzindo ansiedade e arranhaduras indesejadas no sofá." }
+    ];
+
+    // Common SVG Vector Icon component to guarantee high-performance offline layout
+    const Icon = ({ name, className = 'w-5 h-5' }) => {
+      const svgs = {
+        Heart: `<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="currentColor"/>`,
+        Calendar: `<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>`,
+        ShoppingBag: `<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>`,
+        MapPin: `<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>`,
+        Trophy: `<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a6 6 0 0 1 6 6v1.4c0 1.6-1.3 3-2.9 3.3l-1.3.1c-1.2.1-2.4.1-3.6 0l-1.3-.1C7.3 12.4 6 11 6 9.4V8a6 6 0 0 1 6-6Z"/>`,
+        BookOpen: `<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`,
+        Plus: `<line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/>`,
+        Trash2: `<path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/>`,
+        User: `<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+        LogOut: `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>`
+      };
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+          dangerouslySetInnerHTML={{ __html: svgs[name] || `<circle cx="12" cy="12" r="10"/>` }}
+        />
+      );
+    };
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      const [user, setUser] = useState(null);
+      const [pets, setPets] = useState(initialPetsData);
+      const [selectedPetId, setSelectedPetId] = useState("p1");
+      const [appointments, setAppointments] = useState([]);
+      const [cart, setCart] = useState([]);
+      const [activeTab, setActiveTab] = useState("pets");
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+      // Search & Filters state
+      const [storeCategory, setStoreCategory] = useState("todos");
+      const [quizScore, setQuizScore] = useState(null);
+      const [quizAnswered, setQuizAnswered] = useState(false);
+      const [expandedPostId, setExpandedPostId] = useState(null);
+      const [deliveryTracker, setDeliveryTracker] = useState(null);
+
+      // Forms state
+      const [newPetName, setNewPetName] = useState("");
+      const [newPetBreed, setNewPetBreed] = useState("");
+      const [newWeight, setNewWeight] = useState("");
+      const [newVacName, setNewVacName] = useState("");
+      const [newClinicalDesc, setNewClinicalDesc] = useState("");
+      const [showAddPet, setShowAddPet] = useState(false);
+
+      const [apptDate, setApptDate] = useState("");
+      const [apptTime, setApptTime] = useState("10:00");
+      const [apptService, setApptService] = useState("pr1");
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        setUser(initialUserProfile);
+        setIsLoggedIn(true);
+      };
+
+      const handleAddPet = (e) => {
+        e.preventDefault();
+        if (!newPetName || !newPetBreed) return;
+        const newPet = {
+          id: `p-${Date.now()}`,
+          name: newPetName,
+          breed: newPetBreed,
+          age: "Filhote",
+          gender: "Macho",
+          photo: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=250&q=80",
+          weightHistory: [{ date: "Hoje", value: 4.5 }],
+          vaccinations: [],
+          healthHistory: []
+        };
+        setPets([...pets, newPet]);
+        setSelectedPetId(newPet.id);
+        setNewPetName("");
+        setNewPetBreed("");
+        setShowAddPet(false);
+      };
+
+      const handleAddWeight = (e) => {
+        e.preventDefault();
+        const weightVal = parseFloat(newWeight);
+        if (!weightVal) return;
+        setPets(pets.map(p => {
+          if (p.id === selectedPetId) {
+            return { ...p, weightHistory: [...p.weightHistory, { date: "Hoje", value: weightVal }] };
+          }
+          return p;
+        }));
+        setNewWeight("");
+      };
+
+      const handleAddVaccine = (e) => {
+        e.preventDefault();
+        if (!newVacName) return;
+        setPets(pets.map(p => {
+          if (p.id === selectedPetId) {
+            return {
+              ...p,
+              vaccinations: [...p.vaccinations, { id: `v-${Date.now()}`, name: newVacName, date: "Agendada", status: "pending" }]
+            };
+          }
+          return p;
+        }));
+        setNewVacName("");
+      };
+
+      const handleAddClinical = (e) => {
+        e.preventDefault();
+        if (!newClinicalDesc) return;
+        setPets(pets.map(p => {
+          if (p.id === selectedPetId) {
+            return {
+              ...p,
+              healthHistory: [...p.healthHistory, { id: `h-${Date.now()}`, date: "2026-07-06", title: "Ocorrência Geral", description: newClinicalDesc, doctor: "Anotado pelo Tutor" }]
+            };
+          }
+          return p;
+        }));
+        setNewClinicalDesc("");
+      };
+
+      const handleAddAppointment = (e) => {
+        e.preventDefault();
+        if (!apptDate) return;
+        const serviceMap = {
+          pr1: { name: "Banho & Tosa Estética Premium", price: 85.00 },
+          pr2: { name: "Consulta Veterinária Geral", price: 150.00 },
+          pr3: { name: "Aplicação Express Vacina", price: 65.00 }
+        };
+        const selectedService = serviceMap[apptService] || serviceMap["pr1"];
+        const newAppt = {
+          id: `ap-${Date.now()}`,
+          petName: pets.find(p => p.id === selectedPetId)?.name || "Pet",
+          serviceName: selectedService.name,
+          date: apptDate,
+          time: apptTime,
+          price: selectedService.price,
+          status: "agendado"
+        };
+        setAppointments([...appointments, newAppt]);
+        setApptDate("");
+        alert("Agendamento efetuado! Mariana ganhou +30 pontos de fidelidade.");
+        setUser({ ...user, points: user.points + 30 });
+      };
+
+      const handleAddToCart = (product) => {
+        const existing = cart.find(item => item.product.id === product.id);
+        if (existing) {
+          setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+        } else {
+          setCart([...cart, { product, quantity: 1 }]);
+        }
+      };
+
+      const handleCheckout = () => {
+        if (cart.length === 0) return;
+        alert("Pagamento processado com Pix! Entrega Expressa gerada em tempo real.");
+        setDeliveryTracker({
+          orderId: `ORD-${Math.floor(Math.random() * 9000 + 1000)}`,
+          status: "preparando",
+          steps: ["Pedido Confirmado", "Preparando Coleta", "Em Trânsito", "Entregue"]
+        });
+        setCart([]);
+        setUser({ ...user, points: user.points + 50 });
+      };
+
+      const currentPet = pets.find(p => p.id === selectedPetId) || pets[0];
+
+      if (!isLoggedIn) {
+        return (
+          <div className="flex-1 flex items-center justify-center p-6 bg-slate-100">
+            <form onSubmit={handleLogin} className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-150 shadow-xl space-y-6 text-center animate-fade-in">
+              <div className="bg-emerald-500 text-white h-16 w-16 rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                🐾
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold font-display text-slate-800">PET CLUB</h2>
+                <p className="text-xs text-slate-500 mt-1">Insira os dados do tutor para acessar o prontuário e mimos</p>
+              </div>
+              <div className="space-y-4 text-left">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">E-mail do Tutor</label>
+                  <input type="email" value="mariana.silva@petmail.com" disabled className="w-full text-xs border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Senha padrão</label>
+                  <input type="password" value="******" disabled className="w-full text-xs border border-slate-200 bg-slate-50 rounded-xl px-4 py-3 cursor-not-allowed" />
+                </div>
+                <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl transition shadow-sm">
+                  Entrar no Painel do Tutor
+                </button>
+              </div>
+            </form>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex-1 flex flex-col">
+          {/* Header Bar */}
+          <header className="bg-white border-b border-slate-150 sticky top-0 z-50">
+            <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🐾</span>
+                <span className="font-display font-bold text-slate-900 tracking-tight text-lg">PET CLUB</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right hidden sm:block">
+                  <p className="text-xs font-bold text-slate-800">{user.name}</p>
+                  <p className="text-[10px] text-emerald-600 font-bold">✨ {user.points} Pontos Club</p>
+                </div>
+                <img src={user.avatar} alt="Avatar" className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-100" />
+                <button onClick={() => setIsLoggedIn(false)} className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg transition" title="Sair">
+                  <Icon name="LogOut" className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Navigation Tabs */}
+          <nav className="bg-slate-900 text-slate-300">
+            <div className="max-w-6xl mx-auto px-4 flex overflow-x-auto gap-4">
+              {[
+                { id: "pets", label: "Pets", icon: "Heart" },
+                { id: "agenda", label: "Agenda", icon: "Calendar" },
+                { id: "mimos", label: "Mimos", icon: "ShoppingBag" },
+                { id: "clinicas", label: "Clínicas & Delivery", icon: "MapPin" },
+                { id: "fidelidade", label: "Clube", icon: "Trophy" },
+                { id: "blog", label: "Blog", icon: "BookOpen" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-3 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${
+                    activeTab === tab.id ? "border-emerald-400 text-white" : "border-transparent hover:text-white"
+                  }`}
+                >
+                  <Icon name={tab.icon} className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          {/* Main Workspace */}
+          <main className="max-w-6xl w-full mx-auto p-4 sm:p-6 flex-1">
+            <div className="animate-fade-in">
+              
+              {/* TAB 1: PETS */}
+              {activeTab === "pets" && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {/* Left Sidebar */}
+                  <div className="md:col-span-1 space-y-4">
+                    <div className="bg-white p-4 rounded-2xl border border-slate-150 shadow-xs space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pets Cadastrados</span>
+                        <button onClick={() => setShowAddPet(!showAddPet)} className="text-emerald-500 hover:text-emerald-600 font-bold text-xs flex items-center gap-1">
+                          <Icon name="Plus" className="w-3.5 h-3.5" /> Novo
+                        </button>
+                      </div>
+
+                      {showAddPet && (
+                        <form onSubmit={handleAddPet} className="p-3 bg-slate-50 rounded-xl space-y-2.5 text-xs">
+                          <input type="text" placeholder="Nome do Amigo" value={newPetName} onChange={e => setNewPetName(e.target.value)} required className="w-full border p-1.5 rounded-lg bg-white" />
+                          <input type="text" placeholder="Raça (ex: Siamês)" value={newPetBreed} onChange={e => setNewPetBreed(e.target.value)} required className="w-full border p-1.5 rounded-lg bg-white" />
+                          <button type="submit" className="w-full bg-emerald-500 text-white font-bold py-1.5 rounded-lg">Criar Prontuário</button>
+                        </form>
+                      )}
+
+                      <div className="space-y-2">
+                        {pets.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => setSelectedPetId(p.id)}
+                            className={`w-full flex items-center gap-3 p-2 rounded-xl text-left border text-xs font-semibold transition ${
+                              selectedPetId === p.id ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-slate-50 border-slate-150 hover:bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            <img src={p.photo} alt={p.name} className="w-10 h-10 rounded-full object-cover shadow-xs" />
+                            <div>
+                              <p className="font-bold">{p.name}</p>
+                              <p className="text-[10px] text-slate-400">{p.breed}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Details */}
+                  <div className="md:col-span-3 space-y-6">
+                    {currentPet ? (
+                      <div className="bg-white rounded-3xl border border-slate-150 shadow-sm overflow-hidden">
+                        {/* Header card of pet */}
+                        <div className="p-6 bg-slate-50 border-b border-slate-150 flex flex-col sm:flex-row items-center gap-4 justify-between">
+                          <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+                            <img src={currentPet.photo} alt={currentPet.name} className="w-16 h-16 rounded-full object-cover ring-4 ring-emerald-100" />
+                            <div>
+                              <h3 className="text-xl font-bold font-display text-slate-800">{currentPet.name}</h3>
+                              <p className="text-xs text-slate-500 font-semibold">{currentPet.gender} &bull; {currentPet.breed} &bull; {currentPet.age}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (pets.length <= 1) {
+                                alert("Você precisa manter pelo menos um pet cadastrado!");
+                                return;
+                              }
+                              setPets(pets.filter(p => p.id !== currentPet.id));
+                              setSelectedPetId(pets.find(p => p.id !== currentPet.id).id);
+                            }}
+                            className="text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-xl transition text-xs font-bold"
+                          >
+                            Excluir Pet
+                          </button>
+                        </div>
+
+                        {/* Interactive columns: Weight, Vaccines, History */}
+                        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {/* Column 1: Weight Chart */}
+                          <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Histórico de Peso</h4>
+                            <div className="bg-slate-50 rounded-xl p-3 h-32 flex items-end justify-between border relative">
+                              <div className="absolute inset-x-0 top-1/2 border-t border-slate-200 border-dashed" />
+                              {currentPet.weightHistory.map((w, idx) => (
+                                <div key={idx} className="flex flex-col items-center flex-1 relative z-10">
+                                  <span className="text-[9px] font-extrabold bg-white border px-1 rounded shadow-xs">{w.value}kg</span>
+                                  <div className="w-4 bg-emerald-500 rounded-t-sm" style={{ height: `${w.value * 2}px` }} />
+                                  <span className="text-[9px] text-slate-400 font-bold mt-1">{w.date}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <form onSubmit={handleAddWeight} className="flex gap-1.5">
+                              <input type="number" step="0.1" placeholder="Novo peso" value={newWeight} onChange={e => setNewWeight(e.target.value)} required className="text-xs border rounded-lg px-2 py-1.5 w-full bg-white" />
+                              <button type="submit" className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Lançar</button>
+                            </form>
+                          </div>
+
+                          {/* Column 2: Vaccines */}
+                          <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-display">Vacinas Recomendadas</h4>
+                            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                              {currentPet.vaccinations.length === 0 ? (
+                                <p className="text-[10px] text-slate-400 italic">Sem vacinas lançadas.</p>
+                              ) : (
+                                currentPet.vaccinations.map(v => (
+                                  <div key={v.id} className="p-2 bg-slate-50 border rounded-lg flex items-center justify-between text-[11px]">
+                                    <div>
+                                      <p className="font-bold text-slate-800">{v.name}</p>
+                                      <p className="text-[9px] text-slate-400">{v.date}</p>
+                                    </div>
+                                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${v.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                      {v.status === 'completed' ? 'Ok' : 'Pendente'}
+                                    </span>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                            <form onSubmit={handleAddVaccine} className="flex gap-1.5">
+                              <input type="text" placeholder="Nome da Vacina" value={newVacName} onChange={e => setNewVacName(e.target.value)} required className="text-xs border rounded-lg px-2 py-1.5 w-full bg-white" />
+                              <button type="submit" className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Adicionar</button>
+                            </form>
+                          </div>
+
+                          {/* Column 3: Clinical Health */}
+                          <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Histórico Clínico</h4>
+                            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                              {currentPet.healthHistory.length === 0 ? (
+                                <p className="text-[10px] text-slate-400 italic">Sem observações clínicas lançadas.</p>
+                              ) : (
+                                currentPet.healthHistory.map(h => (
+                                  <div key={h.id} className="p-2 bg-slate-50 border rounded-lg text-[10px]">
+                                    <div className="flex justify-between font-bold text-slate-800">
+                                      <span>{h.title}</span>
+                                      <span className="text-[9px] text-slate-400">{h.date}</span>
+                                    </div>
+                                    <p className="text-slate-600 mt-0.5 leading-tight">{h.description}</p>
+                                    <p className="text-[8px] text-slate-400 italic mt-0.5">Resp: {h.doctor}</p>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                            <form onSubmit={handleAddClinical} className="flex gap-1.5">
+                              <input type="text" placeholder="Adicionar Sintomas/Visitas" value={newClinicalDesc} onChange={e => setNewClinicalDesc(e.target.value)} required className="text-xs border rounded-lg px-2 py-1.5 w-full bg-white" />
+                              <button type="submit" className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Gravar</button>
+                            </form>
+                          </div>
+
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-center text-slate-400 py-12">Por favor, cadastre um pet.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: SCHEDULER AGENDA */}
+              {activeTab === "agenda" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Left Column: Form */}
+                  <form onSubmit={handleAddAppointment} className="md:col-span-1 bg-white p-6 rounded-3xl border border-slate-150 shadow-sm space-y-4 text-xs">
+                    <h3 className="text-sm font-bold font-display text-slate-800">Lançar Novo Atendimento</h3>
+                    
+                    <div>
+                      <label className="font-bold text-slate-600 block mb-1">Qual pet irá receber o cuidado?</label>
+                      <select value={selectedPetId} onChange={e => setSelectedPetId(e.target.value)} className="w-full border p-2.5 rounded-lg bg-white">
+                        {pets.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.breed})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-600 block mb-1">Selecione o Serviço</label>
+                      <select value={apptService} onChange={e => setApptService(e.target.value)} className="w-full border p-2.5 rounded-lg bg-white">
+                        <option value="pr1">Banho & Tosa Estética Premium (R$ 85,00)</option>
+                        <option value="pr2">Consulta Veterinária Geral (R$ 150,00)</option>
+                        <option value="pr3">Aplicação Express Vacina (R$ 65,00)</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="font-bold text-slate-600 block mb-1">Escolha a Data</label>
+                        <input type="date" value={apptDate} onChange={e => setApptDate(e.target.value)} required className="w-full border p-2.5 rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-600 block mb-1">Horário</label>
+                        <select value={apptTime} onChange={e => setApptTime(e.target.value)} className="w-full border p-2.5 rounded-lg bg-white">
+                          <option value="09:00">09:00</option>
+                          <option value="10:30">10:30</option>
+                          <option value="14:00">14:00</option>
+                          <option value="15:30">15:30</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg text-xs uppercase tracking-wider">
+                      Agendar Cuidados Express
+                    </button>
+                  </form>
+
+                  {/* Right Column: List of Appointments */}
+                  <div className="md:col-span-2 bg-white p-6 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Atendimentos Agendados</h3>
+                    <div className="space-y-3">
+                      {appointments.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic">Nenhum atendimento reservado para esta semana.</p>
+                      ) : (
+                        appointments.map(a => (
+                          <div key={a.id} className="p-4 bg-slate-50 border rounded-2xl flex items-center justify-between text-xs animate-fade-in">
+                            <div>
+                              <p className="font-bold text-slate-800">{a.serviceName}</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Pet: <span className="font-semibold text-slate-600">{a.petName}</span> &bull; Data: {a.date} às {a.time}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-emerald-600">R$ {a.price.toFixed(2)}</p>
+                              <button onClick={() => setAppointments(appointments.filter(ap => ap.id !== a.id))} className="text-red-500 text-[10px] hover:underline font-bold mt-1">Cancelar</button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: MIMOS STORE */}
+              {activeTab === "mimos" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Product List */}
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="flex gap-2">
+                      {["todos", "ração", "brinquedos", "acessórios"].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setStoreCategory(cat)}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition capitalize ${
+                            storeCategory === cat ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {catalogProducts
+                        .filter(p => storeCategory === "todos" || p.category === storeCategory)
+                        .map(p => (
+                          <div key={p.id} className="bg-white border rounded-2xl overflow-hidden p-3 flex flex-col justify-between hover:shadow-md transition">
+                            <img src={p.image} alt={p.name} className="w-full h-24 object-cover rounded-xl" />
+                            <div className="mt-2 space-y-1">
+                              <h4 className="text-xs font-bold text-slate-800 line-clamp-1">{p.name}</h4>
+                              <p className="text-[10px] text-slate-400 leading-tight line-clamp-2">{p.desc}</p>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-extrabold text-slate-900">R$ {p.price.toFixed(2)}</span>
+                                {p.oldPrice && <span className="text-[9px] text-slate-400 line-through">R$ {p.oldPrice.toFixed(2)}</span>}
+                              </div>
+                            </div>
+                            <button onClick={() => handleAddToCart(p)} className="w-full mt-3 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold uppercase tracking-wider py-1.5 rounded-lg transition">
+                              Adicionar
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Right Cart Section */}
+                  <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800">Cesta de Mimos</h3>
+                    <div className="space-y-3 min-h-[150px] max-h-60 overflow-y-auto">
+                      {cart.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic py-6 text-center">Sua cesta está vazia.</p>
+                      ) : (
+                        cart.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-xs border-b pb-2">
+                            <div>
+                              <p className="font-bold text-slate-800 line-clamp-1">{item.product.name}</p>
+                              <p className="text-[10px] text-slate-400">{item.quantity}x &bull; R$ {item.product.price.toFixed(2)}</p>
+                            </div>
+                            <button onClick={() => setCart(cart.filter(c => c.product.id !== item.product.id))} className="text-red-500 hover:text-red-700 text-xs font-bold">Remover</button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {cart.length > 0 && (
+                      <div className="border-t pt-4 space-y-3 text-xs">
+                        <div className="flex justify-between font-bold text-slate-800">
+                          <span>Total Geral</span>
+                          <span>R$ {cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0).toFixed(2)}</span>
+                        </div>
+                        <button onClick={handleCheckout} className="w-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-widest py-3 rounded-lg shadow-xs">
+                          Finalizar Compra via Pix
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: CLINICS & DELIVERY TRACKER */}
+              {activeTab === "clinicas" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Coordinates Map Display */}
+                  <div className="lg:col-span-2 bg-white rounded-3xl p-4 border border-slate-150 shadow-sm space-y-3">
+                    <h3 className="text-sm font-bold text-slate-800">Mapa Digital de Atendimento</h3>
+                    <p className="text-[11px] text-slate-400">Arraste a visão ou clique em uma clínica parceira para traçar rota direta.</p>
+                    
+                    {/* Pixel Grid Mock Map */}
+                    <div className="h-64 bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden relative shadow-inner">
+                      {/* Grid overlay */}
+                      <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
+                      
+                      {/* Clinics Map Pins */}
+                      {partnerClinics.map(c => (
+                        <div
+                          key={c.id}
+                          className="absolute text-center group cursor-pointer"
+                          style={{ left: `${c.coords.x}%`, top: `${c.coords.y}%` }}
+                        >
+                          <div className="bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-md font-bold shadow-md whitespace-nowrap">
+                            🏥 {c.name.split(" ")[1] || "Clínica"}
+                          </div>
+                          <div className="w-2.5 h-2.5 bg-emerald-400 border border-white rounded-full mx-auto shadow-sm -mt-0.5 animate-ping absolute top-full left-1/2 -ml-1.25" />
+                        </div>
+                      ))}
+
+                      {/* Moving delivery truck if tracker active */}
+                      {deliveryTracker && (
+                        <div className="absolute top-[45%] left-[50%] -ml-6 -mt-4 text-center animate-bounce">
+                          <span className="text-2xl">🚚</span>
+                          <span className="block text-[8px] font-mono text-amber-300 font-bold bg-slate-950 px-1 py-0.5 rounded">Express</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Clinic Cards & Delivery Tracker */}
+                  <div className="lg:col-span-1 space-y-4">
+                    {deliveryTracker && (
+                      <div className="bg-white p-5 rounded-3xl border border-slate-150 shadow-md space-y-3 animate-fade-in">
+                        <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">Rastreio em Tempo Real</span>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">Cesta de Mimos: {deliveryTracker.orderId}</p>
+                          <p className="text-[10px] text-slate-400">Previsão: Entrega Expressa em 30 min.</p>
+                        </div>
+                        <div className="space-y-1.5 text-[10px] font-semibold text-slate-600">
+                          {deliveryTracker.steps.map((st, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <span className="text-emerald-500">✓</span>
+                              <span>{st}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <button onClick={() => setDeliveryTracker(null)} className="w-full py-1 bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-bold rounded-lg transition">
+                          Ocultar Rastreamento
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-3">
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Hospitais Credenciados</h4>
+                      <div className="space-y-3.5">
+                        {partnerClinics.map(c => (
+                          <div key={c.id} className="text-xs border-b pb-3 last:border-0 last:pb-0">
+                            <h5 className="font-bold text-slate-800">{c.name}</h5>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{c.address}</p>
+                            <p className="text-[10px] text-slate-500 font-bold mt-1">📞 {c.phone}</p>
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {c.services.map((s, idx) => (
+                                <span key={idx} className="bg-slate-100 text-slate-600 text-[8px] font-bold px-1.5 py-0.5 rounded">{s}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: FIDELIDADE & PET QUIZ */}
+              {activeTab === "fidelidade" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Column: Loyalty Progress */}
+                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-150 shadow-sm space-y-6">
+                    <div className="flex justify-between items-center border-b pb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">Programa de Gamificação Pet Club</h3>
+                        <p className="text-xs text-slate-400">Complete desafios diários e desbloqueie conquistas com prêmios.</p>
+                      </div>
+                      <span className="text-xl">🏆</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {initialBadges.map(b => (
+                        <div key={b.id} className={`p-4 rounded-2xl border text-center relative ${b.unlocked ? "bg-emerald-50/50 border-emerald-200 text-slate-800" : "bg-slate-50 border-slate-150 text-slate-400"}`}>
+                          <span className="text-2xl block mb-2">{b.icon}</span>
+                          <h4 className="text-xs font-bold">{b.title}</h4>
+                          <p className="text-[10px] mt-1 leading-tight">{b.desc}</p>
+                          <span className="text-[9px] font-bold text-emerald-600 block mt-2">+{b.points} XP</span>
+                          {b.unlocked && <span className="absolute top-2 right-2 text-[8px] bg-emerald-500 text-white px-1 py-0.2 rounded font-bold uppercase">U</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Mini Quiz Game */}
+                  <div className="lg:col-span-1 bg-slate-900 text-white p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-amber-400">⚡</span>
+                      <h4 className="text-xs font-bold uppercase tracking-widest font-display text-slate-200">Quiz Diário do Tutor</h4>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-normal">Acerte o teste veterinário e fature +40 XP extras de bônus!</p>
+                    
+                    {!quizAnswered ? (
+                      <div className="space-y-3.5 pt-2 text-xs">
+                        <p className="font-bold text-slate-100">Qual desses alimentos é considerado ALTAMENTE tóxico para cães e felinos?</p>
+                        <div className="space-y-2">
+                          <button onClick={() => { setQuizScore(true); setQuizAnswered(true); setUser({ ...user, points: user.points + 40 }); }} className="w-full text-left bg-slate-800 hover:bg-slate-750 p-2.5 rounded-xl border border-slate-700 hover:border-slate-600 transition">
+                            🍫 Chocolate ou Cacau Concentrado
+                          </button>
+                          <button onClick={() => { setQuizScore(false); setQuizAnswered(true); }} className="w-full text-left bg-slate-800 hover:bg-slate-750 p-2.5 rounded-xl border border-slate-700 hover:border-slate-600 transition">
+                            🍌 Banana ou Maçã picada
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3.5 pt-2 text-center animate-fade-in text-xs">
+                        <p className="text-3xl">{quizScore ? "🎉" : "😢"}</p>
+                        <p className="font-bold">{quizScore ? "Resposta correta!" : "Que pena!"}</p>
+                        <p className="text-[10px] text-slate-400 leading-relaxed">
+                          {quizScore 
+                            ? "O cacau contém teobromina, substância letal para os rins e coração do pet. Ganhou +40 XP!" 
+                            : "As frutas selecionadas são ótimos petiscos naturais seguros para o dia a dia."}
+                        </p>
+                        <button onClick={() => setQuizAnswered(false)} className="bg-white text-slate-900 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase">
+                          Jogar Novamente
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 6: WELLNESS BLOG */}
+              {activeTab === "blog" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {blogPosts.map(bp => (
+                      <div key={bp.id} className="bg-white border rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+                        <img src={bp.image} alt={bp.title} className="w-full md:w-44 h-40 object-cover" />
+                        <div className="p-5 flex-1 flex flex-col justify-between">
+                          <div className="space-y-1.5">
+                            <span className="text-[9px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">{bp.category}</span>
+                            <h4 className="text-sm font-bold text-slate-800 leading-snug">{bp.title}</h4>
+                            <p className="text-xs text-slate-500 leading-tight">{bp.summary}</p>
+                          </div>
+                          <div className="flex justify-between items-center pt-4 text-[10px] text-slate-400 font-bold border-t mt-3">
+                            <span>{bp.date}</span>
+                            <button onClick={() => setExpandedPostId(expandedPostId === bp.id ? null : bp.id)} className="text-emerald-500 hover:underline">
+                              {expandedPostId === bp.id ? "Fechar" : "Ler Conteúdo Completo"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {expandedPostId && (
+                    <div className="bg-emerald-50/50 border border-emerald-150 rounded-3xl p-6 space-y-2 animate-fade-in text-xs leading-relaxed">
+                      <h4 className="text-sm font-bold text-slate-900">Leitura ativa:</h4>
+                      <p className="text-slate-700 whitespace-pre-line">{blogPosts.find(b => b.id === expandedPostId)?.content}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </main>
+
+          {/* Footer Branding */}
+          <footer className="bg-slate-900 text-slate-500 text-[10px] text-center py-4 border-t border-slate-850 mt-auto">
+            <p>&copy; 2026 PET CLUB - Plataforma Integrada de Serviços Veterinários e Mimos. Rodando de forma 100% autônoma.</p>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
 </body>
 </html>
